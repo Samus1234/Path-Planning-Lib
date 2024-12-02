@@ -7,12 +7,6 @@
 #include <stack>
 #include <queue>
 
-template <typename T>
-struct HashSelector {
-    using type = std::hash<T>;
-};
-
-
 template<typename T, typename W>
 struct GraphNode {
     using ValueType = T;
