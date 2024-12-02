@@ -28,21 +28,6 @@ struct CellHash {
 
 using CellGraph = Graph<Cell, unsigned, true, true, CellHash>;
 
-struct AStarNode {
-    Cell cell;
-    double g_cost; // Cost from start to this cell
-    double h_cost; // Heuristic cost from this cell to goal
-    double f_cost; // g_cost + h_cost
-
-    AStarNode(const Cell& cell, double g, double h) : cell(cell), g_cost(g), h_cost(h) {
-        f_cost = g_cost + h_cost;
-    }
-
-    bool operator>(const AStarNode& other) const {
-        return f_cost > other.f_cost;
-    }
-};
-
 class OccupancyGrid {
 public:
     OccupancyGrid(size_t width, size_t height) : width_(width), height_(height) {
