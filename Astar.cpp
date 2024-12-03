@@ -15,9 +15,9 @@ public:
     Astar() = default;
     ~Astar() = default;
 
-    Astar(std::shared_ptr<Graph> graph) { setGraph(graph); }
+    Astar(const std::shared_ptr<Graph> graph) { setGraph(graph); }
 
-    void setGraph(std::shared_ptr<Graph> graph) {
+    void setGraph(const std::shared_ptr<Graph> graph) {
         graph_ = graph;
         initialize();
     }
