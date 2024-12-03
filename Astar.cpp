@@ -136,11 +136,11 @@ public:
         auto path_stack = findPath();
 
         while (!path_stack.empty()) {
-            auto path_node = path_stack.top();
+            auto path_cell = path_stack.top();
             path_stack.pop();
-            std::cout << path_node->data_ << " -> ";
+            std::cout << "(" << path_cell.x << ", " << path_cell.y << ")" << " -> ";
         }
-        std::cout << "END" << std::endl;
+        std::cout << "COMPLETE" << std::endl;
     }
 
 private:
@@ -179,6 +179,10 @@ int main(int argc, char** argv) {
 
     std::cout << "Occupancy Grid:\n";
     grid.display();
+
+    std::cout << "\n" << std::endl;
+
+    planner.printPath();
     
     return 0;
 }
