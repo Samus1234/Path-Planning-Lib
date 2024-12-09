@@ -1,24 +1,30 @@
+#ifndef _GRAPH_H_
+#define _GRAPH_H_
+
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <stack>
 #include <queue>
 
-template<typename T>
+template<typename T, typename W>
 struct GraphNode {
+    using ValueType = T;
+    using CostType = W;
+    using NodePtr = GraphNode*;
     GraphNode() = default;
     ~GraphNode() = default;
     GraphNode(const T& data) : data_(data) {}
     GraphNode(T&& data) : data_(std::move(data)) {}
     T data_{};
-    std::unordered_map<GraphNode*, unsigned> neighbours_;
+    std::unordered_map<NodePtr, CostType> neighbors_;
 };
 
 template<typename Graph, bool DFS>
 class GraphIterator {
     using ValueType = typename Graph::ValueType;
     using NodeType = typename Graph::NodeType;
-    using NodePtr = NodeType*;
+    using NodePtr = typename Graph::NodePtr;
 public:
     // Iterator traits
     using iterator_category = std::bidirectional_iterator_tag;
@@ -34,13 +40,12 @@ public:
     GraphIterator(NodePtr node) : node_(node), starting_node_(node) {
         if (node_) {
             visited_.insert(node_);
-            for (auto& [neighbor, _] : node_->neighbours_) {
+            for (auto& [neighbor, _] : node_->neighbors_) {
                 if (DFS) {
                     dfs_stack_.push(neighbor);
                 } else {
                     bfs_queue_.push(neighbor);
                 }
-                // Initialize parent mapping for direct neighbors
                 parent_[neighbor] = node_;
             }
         }
@@ -65,12 +70,10 @@ public:
                 bfs_queue_.pop();
             }
 
-            // Process the node only if it hasn't been visited yet
             if (visited_.find(curr_node) == visited_.end()) {
                 visited_.insert(curr_node);
 
-                // Push neighbors to the stack or queue for further traversal
-                for (auto& [neighbor, _] : curr_node->neighbours_) {
+                for (auto& [neighbor, _] : curr_node->neighbors_) {
                     if (visited_.find(neighbor) == visited_.end()) {
                         if (DFS) {
                             dfs_stack_.push(neighbor);
@@ -78,18 +81,16 @@ public:
                             bfs_queue_.push(neighbor);
                         }
                     }
-                    // Update the parent map for every neighbor
                     if (parent_.find(neighbor) == parent_.end()) {
                         parent_[neighbor] = curr_node;
                     }
                 }
 
                 node_ = curr_node;
-                return *this; // Exit after processing one node
+                return *this;
             }
         }
 
-        // No more nodes to process
         node_ = nullptr;
         return *this;
     }
@@ -98,17 +99,16 @@ public:
         if (node_ == nullptr) {
             throw std::out_of_range("Cannot decrement: current node is nullptr.");
         }
-        if (node_ == starting_node_) { // Starting node check
+        if (node_ == starting_node_) {
             throw std::out_of_range("Cannot decrement: current node is the starting node.");
         }
 
-        // Find the parent of the current node
         auto it = parent_.find(node_);
         if (it == parent_.end()) {
             throw std::out_of_range("Cannot decrement: no parent exists for the current node.");
         }
 
-        node_ = it->second; // Move to the parent
+        node_ = it->second;
         return *this;
     }
 
@@ -141,6 +141,10 @@ public:
         return !(*this == other);
     }
 
+    NodePtr& getNode() {
+        return node_;
+    }
+
 private:
     NodePtr node_{nullptr};
     NodePtr starting_node_{nullptr};
@@ -150,12 +154,18 @@ private:
     std::unordered_set<NodePtr> visited_;
 };
 
-template<typename T, bool DIRECTED, bool DFS>
+template<
+    typename T,
+    typename W = unsigned,
+    bool DIRECTED = true,
+    bool DFS = true,
+    typename Hash = std::hash<T>>
 class Graph {
 public:
     using ValueType = T;
-    using NodeType = GraphNode<T>;
+    using NodeType = GraphNode<T, W>;
     using NodePtr = NodeType*;
+    using CostType = typename NodeType::CostType;
     using Iterator = GraphIterator<Graph, DFS>;
 
     Graph() = default;
@@ -163,8 +173,16 @@ public:
         clear();
     }
 
-    size_t size() const {
+    size_t numVertices() const {
         return graph_nodes_.size();
+    }
+
+    size_t numEdges() const {
+        size_t num_edges = 0;
+        for (const auto& [_, node] : graph_nodes_) {
+            num_edges += node->neighbors_.size();
+        }
+        return num_edges;
     }
 
     void clear() {
@@ -174,7 +192,7 @@ public:
         graph_nodes_.clear();
     }
 
-    NodePtr getNode(const T& data) const {
+    NodePtr getNode(const ValueType& data) const {
         auto it = graph_nodes_.find(data);
         if (it != graph_nodes_.end()) {
             return it->second;
@@ -183,7 +201,7 @@ public:
         return nullptr;
     }
 
-    void insertNode(const T& data) {
+    void insertNode(const ValueType& data) {
         if (graph_nodes_.find(data) != graph_nodes_.end()) {
             std::cout << "Node already present.\n";
             return;
@@ -194,15 +212,15 @@ public:
         }
     }
 
-    void addEdge(const T& from_data, const T& to_data, const unsigned& weight = 1) {
+    void addEdge(const ValueType& from_data, const ValueType& to_data, const CostType& weight = 1) {
         auto from = getNode(from_data);
         auto to = getNode(to_data);
         if (!from || !to) {
             throw std::runtime_error("One or both nodes do not exist.");
         }
-        from->neighbours_[to] = weight;
+        from->neighbors_[to] = weight;
         if (!DIRECTED) {
-            to->neighbours_[from] = weight;
+            to->neighbors_[from] = weight;
         }
     }
 
@@ -218,46 +236,8 @@ public:
     }
 
 private:
-    std::unordered_map<T, NodePtr> graph_nodes_;
+    std::unordered_map<ValueType, NodePtr, Hash> graph_nodes_;
     NodePtr root_{nullptr};
 };
 
-int main() {
-    Graph<char, false, true> graph; // Undirected graph
-
-    graph.insertNode('A');
-    graph.insertNode('B');
-    graph.insertNode('C');
-    graph.insertNode('D');
-    graph.insertNode('E');
-
-    graph.addEdge('A', 'B');
-    graph.addEdge('A', 'D');
-    graph.addEdge('B', 'E');
-    graph.addEdge('B', 'C');
-
-    auto it = graph.begin();
-
-
-    std::cout << "Start -> ";
-
-    std::cout << *(it++) << " -> ";
-    std::cout << *(it++) << " -> ";
-    std::cout << *(it++) << " -> ";
-    std::cout << *(it) << " -> ";
-
-    std::cout << "End\n";
-
-    std::cout << "End -> ";
-
-    
-
-    std::cout << *(it--) << " -> ";
-    std::cout << *(it--) << " -> ";
-    std::cout << *(it) << " -> ";
-
-    std::cout << "Start\n";
-
-
-    return 0;
-}
+#endif /* _GRAPH_H_ */
