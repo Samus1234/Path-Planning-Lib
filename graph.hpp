@@ -46,7 +46,6 @@ public:
                 } else {
                     bfs_queue_.push(neighbor);
                 }
-                // Initialize parent mapping for direct neighbors
                 parent_[neighbor] = node_;
             }
         }
@@ -71,11 +70,9 @@ public:
                 bfs_queue_.pop();
             }
 
-            // Process the node only if it hasn't been visited yet
             if (visited_.find(curr_node) == visited_.end()) {
                 visited_.insert(curr_node);
 
-                // Push neighbors to the stack or queue for further traversal
                 for (auto& [neighbor, _] : curr_node->neighbors_) {
                     if (visited_.find(neighbor) == visited_.end()) {
                         if (DFS) {
@@ -84,18 +81,16 @@ public:
                             bfs_queue_.push(neighbor);
                         }
                     }
-                    // Update the parent map for every neighbor
                     if (parent_.find(neighbor) == parent_.end()) {
                         parent_[neighbor] = curr_node;
                     }
                 }
 
                 node_ = curr_node;
-                return *this; // Exit after processing one node
+                return *this;
             }
         }
 
-        // No more nodes to process
         node_ = nullptr;
         return *this;
     }
@@ -104,17 +99,16 @@ public:
         if (node_ == nullptr) {
             throw std::out_of_range("Cannot decrement: current node is nullptr.");
         }
-        if (node_ == starting_node_) { // Starting node check
+        if (node_ == starting_node_) {
             throw std::out_of_range("Cannot decrement: current node is the starting node.");
         }
 
-        // Find the parent of the current node
         auto it = parent_.find(node_);
         if (it == parent_.end()) {
             throw std::out_of_range("Cannot decrement: no parent exists for the current node.");
         }
 
-        node_ = it->second; // Move to the parent
+        node_ = it->second;
         return *this;
     }
 
