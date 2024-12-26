@@ -31,53 +31,102 @@ using CellGraph = Graph<Cell, unsigned, true, true, CellHash>;
 class OccupancyGrid {
 public:
     OccupancyGrid(size_t width, size_t height) : width_(width), height_(height) {
-        grid_.resize(height, std::vector<int>(width, 0));
+        grid_.resize(height, std::vector<float>(width, 0.0f)); // Initialize with free space
     }
 
-    size_t width() const {
-        return width_;
-    }
-
-    size_t height() const {
-        return height_;
-    }
+    size_t width() const { return width_; }
+    size_t height() const { return height_; }
 
     void addObstacle(int x, int y) {
         if (isValid(x, y)) {
-            grid_[y][x] = 1;
+            grid_[y][x] = 1.0f; // Fully occupied
         }
     }
 
     void removeObstacle(int x, int y) {
         if (isObstacle(x, y)) {
-            grid_[y][x] = 0;
+            grid_[y][x] = 0.0f; // Reset to free space
+        }
+    }
+
+    void addDynamicObstacle(const Cell& location) {
+        if (isValid(location.x, location.y)) {
+            grid_[location.y][location.x] = 1.0f; // Obstacle cost
+        }
+    }
+
+    void removeDynamicObstacle(const Cell& location) {
+        if (isObstacle(location.x, location.y)) {
+            grid_[location.y][location.x] = 0.0f; // Free space
+        }
+    }
+
+    void updateDynamicCost(const Cell& location, float cost) {
+        if (isValid(location.x, location.y)) {
+            grid_[location.y][location.x] = cost; // Update cost
+        }
+    }
+
+    void addCost(int x, int y, float cost) {
+        if (isValid(x, y) && cost >= 0.0f && cost <= 1.0f) {
+            grid_[y][x] = cost; // Set cell to a specific cost
+        }
+    }
+
+    float getCost(int x, int y) const {
+        if (isValid(x, y)) {
+            return grid_[y][x];
+        } else {
+            throw std::out_of_range("Requested cell is out of grid bounds.");
         }
     }
 
     void setPath(int x, int y) {
-        if(isFree(x, y)) {
-            grid_[y][x] = -1;
+        if (isFree(x, y)) {
+            grid_[y][x] = -1.0f; // Mark as part of the path
         }
     }
 
-    void setStart(int x, int y) {
-        start_ = Cell(x, y);
-    }
-
-    void setGoal(int x, int y) {
-        goal_ = Cell(x, y);
-    }
+    void setStart(int x, int y) { start_ = Cell(x, y); }
+    void setGoal(int x, int y) { goal_ = Cell(x, y); }
 
     bool isFree(int x, int y) const {
-        return isValid(x, y) && grid_[y][x] == 0;
+        return isValid(x, y) && grid_[y][x] < 0.5f; // Free if cost < 0.5
     }
 
     bool isObstacle(int x, int y) const {
-        return isValid(x, y) && grid_[y][x] == 1;
+        return isValid(x, y) && grid_[y][x] >= 0.5f; // Obstacle if cost >= 0.5
     }
 
     bool isValid(int x, int y) const {
         return x >= 0 && y >= 0 && x < width_ && y < height_;
+    }
+
+    void inflateObstacles(float inflation_radius) {
+        // Copy the original grid
+        auto temp_grid = grid_;
+
+        // Iterate over every cell
+        for (int y = 0; y < height_; ++y) {
+            for (int x = 0; x < width_; ++x) {
+                if (temp_grid[y][x] >= 0.9f) { // If the cell is an obstacle
+                    // Add costs to cells within the inflation radius
+                    for (int dy = -inflation_radius; dy <= inflation_radius; ++dy) {
+                        for (int dx = -inflation_radius; dx <= inflation_radius; ++dx) {
+                            int nx = x + dx;
+                            int ny = y + dy;
+                            if (isValid(nx, ny)) {
+                                float distance = std::sqrt(dx * dx + dy * dy);
+                                if (distance <= inflation_radius) {
+                                    float inflation_cost = 1.0f - (distance / inflation_radius);
+                                    grid_[ny][nx] = std::max(grid_[ny][nx], inflation_cost);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     void display() const {
@@ -87,10 +136,12 @@ public:
                     std::cout << "S ";
                 } else if (x == goal_.x && y == goal_.y) {
                     std::cout << "G ";
-                } else if (grid_[y][x] == -1) {
+                } else if (grid_[y][x] == -1.0f) {
                     std::cout << "\u2394 ";
-                } else if (grid_[y][x] == 1) {
+                } else if (grid_[y][x] >= 0.9f) {
                     std::cout << "\u25A0 ";
+                } else if (grid_[y][x] > 0.0f) {
+                    std::cout << "C "; // Cost cell
                 } else {
                     std::cout << ". ";
                 }
@@ -99,23 +150,17 @@ public:
         }
     }
 
-    const Cell& getStart() const {
-        return start_;
-    }
-
-    const Cell& getGoal() const {
-        return goal_;
-    }
+    const Cell& getStart() const { return start_; }
+    const Cell& getGoal() const { return goal_; }
 
 private:
     size_t width_, height_;
-    std::vector<std::vector<int>> grid_;
+    std::vector<std::vector<float>> grid_;
     Cell start_{0, 0};
     Cell goal_{0, 0};
 };
 
 void createGraphFromGrid(const OccupancyGrid& grid, std::shared_ptr<CellGraph> graph) {
-    // Add all grid cells to graph
     for (int x = 0; x < grid.width(); ++x) {
         for (int y = 0; y < grid.height(); ++y) {
             if (grid.isFree(x, y)) {
@@ -123,28 +168,21 @@ void createGraphFromGrid(const OccupancyGrid& grid, std::shared_ptr<CellGraph> g
             }
         }
     }
-    // Next, add all the edges, i.e., neioghbors
+
     for (int x = 0; x < grid.width(); ++x) {
         for (int y = 0; y < grid.height(); ++y) {
             if (grid.isFree(x, y)) {
                 Cell current_cell(x, y);
-                // Vector of primitive motion directions
                 const std::vector<std::pair<int, int>> directions = {
-                    {0, 1},  {0, -1},
-                    {1, 0},  {-1, 0},
-                    {1, 1},  {-1, 1},
-                    {1, -1},  {-1, -1},
+                    {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1},
                 };
                 for (const auto& [dx, dy] : directions) {
                     int nx = x + dx;
                     int ny = y + dy;
-                    if (grid.isValid(nx, ny) && !grid.isObstacle(nx, ny)) {
-                        Cell neighbor_cell(nx, ny);
-                        if (dx*dy == 0) {
-                            graph->addEdge(current_cell, neighbor_cell, 1000);
-                        } else {
-                            graph->addEdge(current_cell, neighbor_cell, 1414);
-                        }
+                    if (grid.isValid(nx, ny) && grid.isFree(nx, ny)) {
+                        float current_cost = grid.getCost(nx, ny);
+                        float edge_cost = (dx * dy == 0 ? 1.0f : std::sqrt(2.0f)) + current_cost;
+                        graph->addEdge(current_cell, Cell(nx, ny), edge_cost);
                     }
                 }
             }

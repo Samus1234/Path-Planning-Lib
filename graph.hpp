@@ -167,6 +167,8 @@ public:
     using NodePtr = NodeType*;
     using CostType = typename NodeType::CostType;
     using Iterator = GraphIterator<Graph, DFS>;
+    using SharedPtr = std::shared_ptr<Graph>;
+    using ConstSharedPtr = const SharedPtr;
 
     Graph() = default;
     ~Graph() {
