@@ -157,6 +157,11 @@ _NCrunch_*
 .*crunch*.local.xml
 nCrunchTemp_*
 
+# Plots
+plots/
+build/
+data/
+
 # MightyMoose
 *.mm.*
 AutoTest.Net/
