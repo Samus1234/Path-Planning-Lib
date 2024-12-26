@@ -161,6 +161,7 @@ nCrunchTemp_*
 plots/
 build/
 data/
+matplotlib-cpp/
 
 # MightyMoose
 *.mm.*
