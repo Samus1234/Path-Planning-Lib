@@ -31,8 +31,13 @@ public:
         auto vel_mag_func = [this](float t) { return velocity_reference_(t).norm(); };
         Integrator::TrapezoidalIntegrator<float> num_int(vel_mag_func, step_);
         s_table_ = num_int.integrate(0.0f, t_final);
+        size_t table_size = s_table_.size();
+        t_table_.reserve(table_size);
+        position_trajectory_table_ = Eigen::MatrixXf::Zero(3, table_size);
         for (size_t i = 0; i < s_table_.size(); i++) {
-            t_table_.push_back(((float)i)*step_);
+            float t = ((float)i)*step_;
+            t_table_.push_back(t);
+            position_trajectory_table_.col(i) = position_reference_(t);
         }
     }
 
@@ -54,6 +59,14 @@ public:
         float t_1 = t_table_[i];
 
         return t_1 + (s - s_1) * step_ / (s_2 - s_1);
+    }
+
+    const float& findClosest(VectorType p_robot) {
+        auto p_diff = position_trajectory_table_.colwise() - p_robot;
+        auto distances = p_diff.colwise().norm();
+        int argmin;
+        min_distance_ = distances.minCoeff(&argmin);
+        return s_table_[argmin];
     }
 
     VectorType positionReference(float s) {
@@ -104,9 +117,12 @@ private:
     RefFunc acceleration_reference_{nullptr};
     RefFunc jerk_reference_{nullptr};
 
+    Eigen::MatrixXf position_trajectory_table_;
+
     std::vector<float> s_table_;
     std::vector<float> t_table_;
     float step_{1e-2};
+    float min_distance_{0.0f};
 };
 
 } // End TrajectoryUtils
