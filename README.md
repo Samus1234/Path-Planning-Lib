@@ -3,7 +3,7 @@
 A library I wrote to better understand path and motion planning algorithsm, data strctures, and robotics utitlties. I've worked in implementing A*, arc-length parameterization for trajectory tracking, a discrete-time LQR, etc along with whatever data structure I though was interesting!
 
 🚧 **This project is a work in progress** 🚧  
-I will be actively working adding new features to this project as we go. Any feedback would be appreciated. Things I plan on implementing soon include a full stack motion planner for a Quadrotor and an implementation of D-lite* for dynamic path planning.
+I will be actively working on adding new features to this project as we go. Any feedback would be appreciated. Things I plan on implementing soon include a full stack motion planner for a Quadrotor and an implementation of D-lite* for dynamic path planning.
 
 ---
 
