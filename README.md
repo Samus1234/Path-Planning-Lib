@@ -2,6 +2,10 @@
 
 A modular library for path planning algorithms, data structures, and robotics utilities. This library includes implementations of A* search, Dijkstra’s algorithm, and more, along with supporting utilities like queues, stacks, and graphs.
 
+🚧 **This project is a work in progress** 🚧  
+New features and improvements are being actively developed and added regularly. Contributions and feedback are welcome as the project evolves!
+
+
 ---
 
 ## Directory Structure
