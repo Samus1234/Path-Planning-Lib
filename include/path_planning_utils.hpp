@@ -99,7 +99,7 @@ public:
     }
 
     bool isValid(int x, int y) const {
-        return x >= 0 && y >= 0 && x < width_ && y < height_;
+        return x >= 0 && y >= 0 && x < (int)width_ && y < (int)height_;
     }
 
     void inflateObstacles(float inflation_radius) {
@@ -107,8 +107,8 @@ public:
         auto temp_grid = grid_;
 
         // Iterate over every cell
-        for (int y = 0; y < height_; ++y) {
-            for (int x = 0; x < width_; ++x) {
+        for (int y = 0; y < (int)height_; ++y) {
+            for (int x = 0; x < (int)width_; ++x) {
                 if (temp_grid[y][x] >= 0.9f) { // If the cell is an obstacle
                     // Add costs to cells within the inflation radius
                     for (int dy = -inflation_radius; dy <= inflation_radius; ++dy) {
@@ -130,8 +130,8 @@ public:
     }
 
     void display() const {
-        for (int y = 0; y < height_; ++y) {
-            for (int x = 0; x < width_; ++x) {
+        for (int y = 0; y < (int)height_; ++y) {
+            for (int x = 0; x < (int)width_; ++x) {
                 if (x == start_.x && y == start_.y) {
                     std::cout << "S ";
                 } else if (x == goal_.x && y == goal_.y) {
@@ -161,16 +161,16 @@ private:
 };
 
 void createGraphFromGrid(const OccupancyGrid& grid, std::shared_ptr<CellGraph> graph) {
-    for (int x = 0; x < grid.width(); ++x) {
-        for (int y = 0; y < grid.height(); ++y) {
+    for (int x = 0; x < (int)grid.width(); ++x) {
+        for (int y = 0; y < (int)grid.height(); ++y) {
             if (grid.isFree(x, y)) {
                 graph->insertNode(Cell(x, y));
             }
         }
     }
 
-    for (int x = 0; x < grid.width(); ++x) {
-        for (int y = 0; y < grid.height(); ++y) {
+    for (int x = 0; x < (int)grid.width(); ++x) {
+        for (int y = 0; y < (int)grid.height(); ++y) {
             if (grid.isFree(x, y)) {
                 Cell current_cell(x, y);
                 const std::vector<std::pair<int, int>> directions = {

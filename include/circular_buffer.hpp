@@ -1,3 +1,6 @@
+#ifndef _CIRCULAR_BUFFER_H_
+#define _CIRCULAR_BUFFER_H_
+
 #include <iostream>
 #include <cstring>
 
@@ -5,7 +8,7 @@ template <typename T, size_t N>
 class CircularBuffer {
 public:
     CircularBuffer() {
-        memset(data_, (T) NULL, N);
+        std::fill(std::begin(data_), std::end(data_), T());
     }
 
     ~CircularBuffer() = default;
@@ -17,7 +20,9 @@ public:
         } else {
             for (size_t i = 0; i < N; i++){
                 size_t j = (N-1) - i;
-                data_[j] = data_[j-1];
+                if (j > 0) {
+                    data_[j] = data_[j-1];
+                }
             }
             data_[0] = data;
         }
@@ -37,15 +42,4 @@ private:
     size_t index_{0};
 };
 
-int main(int argc, char** argv) {
-
-    CircularBuffer<int, 5> buffer;
-    
-    for (size_t i = 0; i < 25; i++) {
-        buffer.push(i);
-        buffer.printBuffer();
-    }
-    
-
-    return 0;
-}
+#endif /* _CIRCULAR_BUFFER_H_ */

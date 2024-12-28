@@ -25,7 +25,7 @@ public:
         horizon_ = 100;
         size_t n = horizon_*(num_states_ + num_controls_);
         size_t m = horizon_*num_states_;
-        H_ = Eigen::MatrixXf::Identity(n, n)*1e-2;
+        H_ = Eigen::MatrixXf::Identity(n, n)*1;
         C_ = Eigen::MatrixXf::Zero(m, n);
         KKT_ = Eigen::MatrixXf::Zero(m+n, m+n);
         for (size_t i = 0; i < horizon_; ++i) {
@@ -36,7 +36,7 @@ public:
                 C_.block(row_offset, col_offset - num_states_, num_states_, num_states_) = -A;
             }
             C_.block(row_offset, col_offset + num_controls_, num_states_, num_states_) = -I;
-            H_.block(col_offset, col_offset, num_states_, num_states_) = 200*I;
+            H_.block(col_offset, col_offset, num_states_, num_states_) = 1*I;
         }
         KKT_.block(0, 0, n, n) = H_;
         KKT_.block(0, n, n, m) = C_.transpose();

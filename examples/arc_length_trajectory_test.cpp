@@ -46,7 +46,7 @@ public:
 private:
     StateMatrix A_{StateMatrix::Zero()};
     ControlMatrix B_{ControlMatrix::Zero()};
-    float Ts_{1e-2};
+    float Ts_{5e-2};
 };
 
 Eigen::MatrixXf computeJacobian(
@@ -140,12 +140,12 @@ void testSystem() {
     System::StateVector x = System::StateVector::Zero();
     System::StateVector x_ref = System::StateVector::Zero();
 
-    float v_desired = 4.0f;
+    float v_desired = 5.0f;
 
     std::ofstream output_file("data/trajectory_data.csv");
     output_file << "time,s,x,y,z,vx,vy,vz,x_ref,y_ref,z_ref,vx_ref,vy_ref,vz_ref,u1,u2,u3,e\n";
 
-    for (int i = 0; i < 10000; ++i) {
+    for (int i = 0; i < 2500; ++i) {
         float s_nearest = arc_length_traj.findClosest(x.segment<3>(0));
         s_nearest += v_desired * delta_t;
         if (true) {

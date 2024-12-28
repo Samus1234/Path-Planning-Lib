@@ -65,7 +65,7 @@ public:
     float findClosest(VectorType p_robot) {
         auto p_diff = position_trajectory_table_.colwise() - p_robot;
         auto distances = p_diff.colwise().norm();
-        int argmin;
+        size_t argmin;
         min_distance_ = distances.minCoeff(&argmin);
 
         if (argmin >= s_table_.size()-1) {

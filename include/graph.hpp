@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <stack>
 #include <queue>
+#include <memory>
 
 template<typename T, typename W>
 struct GraphNode {
@@ -168,7 +169,7 @@ public:
     using CostType = typename NodeType::CostType;
     using Iterator = GraphIterator<Graph, DFS>;
     using SharedPtr = std::shared_ptr<Graph>;
-    using ConstSharedPtr = const SharedPtr;
+    using ConstSharedPtr = std::shared_ptr<const Graph>;
 
     Graph() = default;
     ~Graph() {

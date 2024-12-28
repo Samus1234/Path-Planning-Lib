@@ -1,27 +1,30 @@
+#ifndef _QUEUE_H_
+#define _QUEUE_H_
+
 #include <iostream>
 
 template<typename T>
-struct Node {
-    Node() = default;
-    ~Node() = default;
+struct QueueNode {
+    QueueNode() = default;
+    ~QueueNode() = default;
 
-    Node(const T& data) : data_(data) {}
-    Node(T&& data) : data_(std::move(data)) {}
+    QueueNode(const T& data) : data_(data) {}
+    QueueNode(T&& data) : data_(std::move(data)) {}
 
     T data_{};
-    Node* next_{nullptr};
+    QueueNode* next_{nullptr};
 };
 
 template<typename T>
 class Queue {
-    using Node = Node<T>;
+    using Node = QueueNode<T>;
 public:
     Queue() = default;
 
     ~Queue() {
-        // while (!isEmpty()){
-        //     dequeue();
-        // }
+        while (!isEmpty()){
+            dequeue();
+        }
     }
 
     Queue(const Queue& other) = delete;
@@ -103,19 +106,4 @@ public:
 
 };
 
-int main(int argc, char** argv) {
-
-    Queue<int> queue;
-
-    for (int i = 0; i < 15; i++) {
-        queue.enqueue(i);
-    }
-
-    for (int i = 0; i < 5; i++) {
-        queue.dequeue();
-    }
-    
-    queue.print();
-
-    return 0;
-}
+#endif /* _QUEUE_H_ */

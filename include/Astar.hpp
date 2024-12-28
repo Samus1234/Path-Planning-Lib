@@ -1,3 +1,6 @@
+#ifndef _ASTAR_H_
+#define _ASTAR_H_
+
 #include "path_planning_utils.hpp"
 #include <memory>
 #include <limits>
@@ -15,9 +18,9 @@ public:
     AStar() = default;
     ~AStar() = default;
 
-    AStar(typename Graph::ConstSharedPtr graph) { setGraph(graph); }
+    AStar(typename Graph::SharedPtr graph) { setGraph(graph); }
 
-    void setGraph(typename Graph::ConstSharedPtr graph) {
+    void setGraph(typename Graph::SharedPtr graph) {
         graph_ = graph;
         initialize();
     }
@@ -78,9 +81,8 @@ public:
             return;
         }
         
-
         for (const auto& [neighbor, step_cost] : current_node->neighbors_) {
-            CostType h_cost = heuristicCost(neighbor->data_, goal_node_->data_); // Estimated cost-to-go
+            CostType h_cost = heuristicCost(neighbor->data_, goal_node_->data_);
             CostType tentative_g_cost = (CostType)step_cost + current_g_cost;
             CostType tentative_f_cost =  tentative_g_cost + h_cost;
             if (tentative_f_cost < shortest_path_map_[neighbor].second) {
@@ -117,10 +119,8 @@ public:
             node = predecessor_map_[node];
             path_stack.push(node->data_);
         }
-        
 
         return path_stack;
-        
     }
 
 
@@ -135,36 +135,4 @@ private:
     std::priority_queue<NodeQueueType, std::vector<NodeQueueType>, std::greater<NodeQueueType>> queue_;
 };
 
-int main(int argc, char** argv) {
-
-    auto graph = std::make_shared<PathPlanningUtils::CellGraph>();
-
-    auto grid = PathPlanningUtils::createTestGrid();
-
-    grid.inflateObstacles(1.5f);
-
-    PathPlanningUtils::createGraphFromGrid(grid, graph);
-
-    std::cout << "Number of Vertices: " << graph->numVertices() << " and number of edges: " << graph->numEdges() << std::endl;
-
-    AStar<PathPlanningUtils::CellGraph> planner(graph);
-
-    planner.setStartAndGoalNodes(grid.getStart(), grid.getGoal());
-
-    auto path_stack = planner.getPath();
-
-    while (!path_stack.empty()) {
-        auto path_cell = path_stack.top();
-        path_stack.pop();
-        grid.setPath(path_cell.x, path_cell.y);
-    }
-
-    
-
-
-    std::cout << "Occupancy Grid:\n";
-    grid.display();
-
-    
-    return 0;
-}
+#endif /* _ASTAR_H_ */

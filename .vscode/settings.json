@@ -68,6 +68,7 @@
         "typeinfo": "cpp",
         "core": "cpp",
         "shared_mutex": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "variant": "cpp"
     }
 }

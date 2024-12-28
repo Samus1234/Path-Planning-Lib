@@ -1,20 +1,23 @@
+#ifndef _STACK_H_
+#define _STACK_H_
+
 #include <iostream>
 
 template<typename T>
-struct Node {
-    Node() = default;
-    ~Node() = default;
+struct StackNode {
+    StackNode() = default;
+    ~StackNode() = default;
 
-    Node(const T& data) : data_(data) {}
-    Node(T&& data) : data_(std::move(data)) {}
+    StackNode(const T& data) : data_(data) {}
+    StackNode(T&& data) : data_(std::move(data)) {}
 
     T data_{};
-    Node* below_{nullptr};
+    StackNode* below_{nullptr};
 };
 
 template<typename T>
 class Stack {
-    using MyNode = Node<T>;
+    using Node = StackNode<T>;
 public:
     Stack() = default;
 
@@ -44,7 +47,7 @@ public:
     }
 
     void push(const T& data) {
-        Node<T>* new_node = new Node<T>(data);
+        Node* new_node = new Node(data);
         if(isEmpty()) {
             top_ = new_node;
             size_++;
@@ -56,7 +59,7 @@ public:
     }
 
     void push(T&& data) {
-        Node<T>* new_node = new Node<T>(std::move(data));
+        Node* new_node = new Node(std::move(data));
         if(isEmpty()) {
             top_ = new_node;
             size_++;
@@ -72,7 +75,7 @@ public:
             throw std::runtime_error("Cannot pop: Stack is empty.");
         }
         T data = top_->data_;
-        Node<T>* temp_node = top_;
+        Node* temp_node = top_;
         top_ = top_->below_;
         delete temp_node;
         size_--;
@@ -80,7 +83,7 @@ public:
     }
 
     void print() const {
-        Node<T>* temp_node = top_;
+        Node* temp_node = top_;
         std::cout << "Top |";
         while (temp_node) { // Stop when temp_node is nullptr
             std::cout << temp_node->data_ << "|";
@@ -92,22 +95,7 @@ public:
 
 public:
     size_t size_{0};
-    Node<T>* top_{nullptr};
+    Node* top_{nullptr};
 };
 
-int main(int argc, char** argv) {
-
-    Stack<int> stack;
-
-    for (int i = 0; i < 15; i++) {
-        stack.push(i);
-    }
-
-    for (int i = 0; i < 5; i++) {
-        stack.pop();
-    }
-
-    stack.print();    
-
-    return 0;
-}
+#endif /* _STACK_H_ */
