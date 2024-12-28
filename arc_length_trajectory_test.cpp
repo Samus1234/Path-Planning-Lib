@@ -80,14 +80,16 @@ Eigen::MatrixXf computeJacobian(
 Eigen::Vector3f pRef(float t) {
     Eigen::Vector3f p;
     float w = 2*M_PI/20;
-    p << cos(w*t), sin(w*t), 0.1f*t;
+    float v_z = 0.1f;
+    p << cos(w*t), sin(w*t), v_z*t;
     return p;
 }
 
 Eigen::Vector3f vRef(float t) {
     Eigen::Vector3f p;
     float w = 2*M_PI/20;
-    p << -w*sin(w*t), w*cos(w*t), 0.1f;
+    float v_z = 0.1f;
+    p << -w*sin(w*t), w*cos(w*t), v_z;
     return p;
 }
 
@@ -138,17 +140,12 @@ void testSystem() {
     System::StateVector x = System::StateVector::Zero();
     System::StateVector x_ref = System::StateVector::Zero();
 
-    x.segment<3>(0) = pRef(0);
-    x.segment<3>(3) = vRef(0);
-
-    float v_desired = 2.0f;
-
-    x_ref << 1, 2, 3, 0, 0, 0;
+    float v_desired = 4.0f;
 
     std::ofstream output_file("data/trajectory_data.csv");
     output_file << "time,s,x,y,z,vx,vy,vz,x_ref,y_ref,z_ref,vx_ref,vy_ref,vz_ref,u1,u2,u3,e\n";
 
-    for (int i = 0; i < 5000; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         float s_nearest = arc_length_traj.findClosest(x.segment<3>(0));
         s_nearest += v_desired * delta_t;
         if (true) {
