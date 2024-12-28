@@ -2,6 +2,9 @@
 #include "trajectory_utils.hpp"
 #include "linear_mpc.hpp"
 
+#include <fstream>
+#include <iomanip>
+
 class System {
 public:
     using StateVector = Eigen::Matrix<float, 6, 1>;
@@ -58,14 +61,14 @@ Eigen::MatrixXf computeJacobian(
     Eigen::MatrixXf J(output_dim, input_dim);
 
     for (int i = 0; i < input_dim; ++i) {
-        Eigen::VectorXf x_forward = x;  // Use VectorXf
-        Eigen::VectorXf x_backward = x; // Use VectorXf
+        Eigen::VectorXf x_forward = x;
+        Eigen::VectorXf x_backward = x;
 
         x_forward(i) += epsilon;
         x_backward(i) -= epsilon;
 
-        Eigen::VectorXf f_forward = func(x_forward);  // Use VectorXf
-        Eigen::VectorXf f_backward = func(x_backward); // Use VectorXf
+        Eigen::VectorXf f_forward = func(x_forward);
+        Eigen::VectorXf f_backward = func(x_backward);
 
         J.col(i) = (f_forward - f_backward) / (2 * epsilon);
     }
@@ -76,13 +79,15 @@ Eigen::MatrixXf computeJacobian(
 
 Eigen::Vector3f pRef(float t) {
     Eigen::Vector3f p;
-    p << cos(t), sin(t), 0.5f*t;
+    float w = 2*M_PI/20;
+    p << cos(w*t), sin(w*t), 0.1f*t;
     return p;
 }
 
 Eigen::Vector3f vRef(float t) {
     Eigen::Vector3f p;
-    p << sin(t), -cos(t), 0.5f;
+    float w = 2*M_PI/20;
+    p << -w*sin(w*t), w*cos(w*t), 0.1f;
     return p;
 }
 
@@ -90,58 +95,87 @@ void testTrajectory() {
     auto position_reference = [] (float t) {return pRef(t);};
     auto velocity_reference = [] (float t) {return vRef(t);};
 
-    float s_robot = 0.0f;
-    float delta_t = 0.01f;
+    float t = 0.0f;
+    float delta_t = 0.1f;
 
     TrajectoryUtils::ArcLengthParameterization<Eigen::Vector3f> arc_length_traj(position_reference, velocity_reference);
 
     arc_length_traj.setStepSize(delta_t);
 
-    arc_length_traj.tabulateArcLength(4*M_PI);
+    arc_length_traj.tabulateArcLength(80);
 
     for (int i = 0; i < 100; ++i) {
-        s_robot += 0.05f;  // Simulated arc-length progress
-        Eigen::Vector3f robot_pos = arc_length_traj.positionReference(s_robot);
-        std::cout << "Robot Position: " << robot_pos.transpose() << " with s: " << s_robot << " and predicted s: " << arc_length_traj.findClosest(robot_pos) << std::endl;
+        t += 1e-5f;
+        Eigen::Vector3f robot_pos = pRef(t);
+        float s_nearest = arc_length_traj.findClosest(robot_pos);
+        std::cout << "Robot Position: " << robot_pos.transpose() << " with t: " << t << " and predicted t: " << arc_length_traj.t(s_nearest) << " and predicted s: " << s_nearest << std::endl;
     }
 }
 
 void testSystem() {
     System sys;
 
-    auto f1 = [sys] (const Eigen::VectorXf& x) {return sys.f_d(x, System::ControlVector::Zero()); };
-    auto f2 = [sys] (const Eigen::VectorXf& u) {return sys.f_d(System::StateVector::Zero(), u); };
+    auto f1 = [sys](const Eigen::VectorXf& x) { return sys.f_d(x, System::ControlVector::Zero()); };
+    auto f2 = [sys](const Eigen::VectorXf& u) { return sys.f_d(System::StateVector::Zero(), u); };
 
     Eigen::MatrixXf Ad = computeJacobian(f1, System::StateVector::Zero());
     Eigen::MatrixXf Bd = computeJacobian(f2, System::ControlVector::Zero());
 
     MPC::LQR lqr(Ad, Bd);
 
-    auto position_reference = [] (float t) {return pRef(t);};
-    auto velocity_reference = [] (float t) {return vRef(t);};
+    auto position_reference = [](float t) { return pRef(t); };
+    auto velocity_reference = [](float t) { return vRef(t); };
 
     float delta_t = 0.01f;
 
     TrajectoryUtils::ArcLengthParameterization<Eigen::Vector3f> arc_length_traj(position_reference, velocity_reference);
 
-    arc_length_traj.setStepSize(delta_t);
+    arc_length_traj.setStepSize(1e-3);
+    arc_length_traj.tabulateArcLength(80);
 
-    arc_length_traj.tabulateArcLength(4*M_PI);
+    std::cout << "Max Trajectory Length: " << arc_length_traj.getMaxArcLength() << " and Max Trajectory Time: " << arc_length_traj.getMaxTime() << std::endl;
 
-    System::StateVector x;
-    x << 0, 0, 0, 0, 0, 0; // Initial state: zero position, unit velocity
-    System::StateVector x_ref;
-    float v_desired = 1.0f;
+    System::StateVector x = System::StateVector::Zero();
+    System::StateVector x_ref = System::StateVector::Zero();
 
-    for (int i = 0; i < 200; ++i) {
+    x.segment<3>(0) = pRef(0);
+    x.segment<3>(3) = vRef(0);
+
+    float v_desired = 2.0f;
+
+    x_ref << 1, 2, 3, 0, 0, 0;
+
+    std::ofstream output_file("data/trajectory_data.csv");
+    output_file << "time,s,x,y,z,vx,vy,vz,x_ref,y_ref,z_ref,vx_ref,vy_ref,vz_ref,u1,u2,u3,e\n";
+
+    for (int i = 0; i < 5000; ++i) {
         float s_nearest = arc_length_traj.findClosest(x.segment<3>(0));
-        s_nearest += v_desired*delta_t;
-        x_ref.segment<3>(0) = arc_length_traj.positionReference(s_nearest);
-        x_ref.segment<3>(3) = arc_length_traj.velocityReference(s_nearest);
-        System::ControlVector u = lqr.computeControl(x - x_ref);
+        s_nearest += v_desired * delta_t;
+        if (true) {
+            x_ref.segment<3>(0) = arc_length_traj.positionReference(s_nearest);
+            x_ref.segment<3>(3) = arc_length_traj.velocityReference(s_nearest);
+        } else {
+            x_ref.segment<3>(0) = pRef(i*delta_t);
+            x_ref.segment<3>(3) = vRef(i*delta_t);
+        }
+        
+        System::StateVector delta_x = x_ref - x;
+        System::ControlVector u = lqr.computeControl(-delta_x);
         x = sys.f_d(x, u);
-        std::cout << "Step " << i << ": " << x.transpose() << std::endl;
+        float e = arc_length_traj.getMinDistance();
+        // Save data to file
+        output_file << std::fixed << std::setprecision(6)
+                    << i * delta_t << ","
+                    << s_nearest - v_desired*delta_t << ","
+                    << x(0) << "," << x(1) << "," << x(2) << ","
+                    << x(3) << "," << x(4) << "," << x(5) << ","
+                    << x_ref(0) << "," << x_ref(1) << "," << x_ref(2) << ","
+                    << x_ref(3) << "," << x_ref(4) << "," << x_ref(5) << ","
+                    << u(0) << "," << u(1) << "," << u(2) << "," << e << "\n";
     }
+
+    output_file.close();
+    std::cout << "Trajectory data saved to trajectory_data.csv" << std::endl;
 }
 
 int main(int argc, char* argv[]) {

@@ -43,30 +43,43 @@ public:
 
     float t(float s) {
         if (s < 0) {
-            throw std::out_of_range("Out of bounds!");
+            throw std::out_of_range("Out of bounds! Received s = " + std::to_string(s));
         }
         if (s_table_.empty() || t_table_.empty()) {
-            throw std::out_of_range("Not tabulated!");
+            throw std::out_of_range("Not tabulated! s_table_ or t_table_ is empty.");
         }
         if (s >= s_table_.back()) {
             return t_table_.back();
         }
-        
+
         auto it = std::lower_bound(s_table_.begin(), s_table_.end(), s);
         size_t i = std::distance(s_table_.begin(), it);
+
         float s_1 = s_table_[i];
-        float s_2 = s_table_[i+1];
+        float s_2 = s_table_[i + 1];
         float t_1 = t_table_[i];
 
         return t_1 + (s - s_1) * step_ / (s_2 - s_1);
     }
 
-    const float& findClosest(VectorType p_robot) {
+    float findClosest(VectorType p_robot) {
         auto p_diff = position_trajectory_table_.colwise() - p_robot;
         auto distances = p_diff.colwise().norm();
         int argmin;
         min_distance_ = distances.minCoeff(&argmin);
-        return s_table_[argmin];
+
+        if (argmin >= s_table_.size()-1) {
+            return s_table_.back();
+        }
+
+        float s1 = s_table_[argmin];
+        float s2 = s_table_[argmin+1];
+        float d1 = distances[argmin];
+        float d2 = distances[argmin+1];
+
+        float weight = ((d1 + d2) > 1e-6f) ? (d2 / (d1 + d2)) : 0.5f;
+
+        return (weight * s1 + (1 - weight) * s2); 
     }
 
     VectorType positionReference(float s) {
@@ -97,18 +110,22 @@ public:
         return jerk_reference_(t(s));
     }
 
-    float getMaxArcLength() {
+    const float& getMaxArcLength() {
         if (s_table_.empty()) {
             throw std::out_of_range("Not tabulated!");
         }
         return s_table_.back();
     }
 
-    float getMaxTime() {
+    const float& getMaxTime() {
         if (t_table_.empty()) {
             throw std::out_of_range("Not tabulated!");
         }
         return t_table_.back();
+    }
+
+    const float& getMinDistance() {
+        return min_distance_;
     }
 
 private:
