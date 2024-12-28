@@ -1,10 +1,9 @@
 # Path Planning Library
 
-A modular library for path planning algorithms, data structures, and robotics utilities. This library includes implementations of A* search, Dijkstra’s algorithm, and more, along with supporting utilities like queues, stacks, and graphs.
+A library I wrote to better understand path and motion planning algorithsm, data strctures, and robotics utitlties. I've worked in implementing A*, arc-length parameterization for trajectory tracking, a discrete-time LQR, etc along with whatever data structure I though was interesting!
 
 🚧 **This project is a work in progress** 🚧  
-New features and improvements are being actively developed and added regularly. Contributions and feedback are welcome as the project evolves!
-
+I will be actively working adding new features to this project as we go. Any feedback would be appreciated. 
 
 ---
 
