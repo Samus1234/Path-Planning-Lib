@@ -37,6 +37,13 @@ foreach(EXAMPLE_FILE ${EXAMPLES})
     set_target_properties(${EXAMPLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${EXAMPLE_NAME})
 endforeach()
 
+foreach(SRC_FILE ${SOURCES})
+    get_filename_component(SRC_NAME ${SRC_FILE} NAME_WE)
+    add_executable(${SRC_NAME} ${SRC_FILE})
+    target_link_libraries(${SRC_NAME} core Python3::Python)
+    set_target_properties(${SRC_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${SRC_NAME})
+endforeach()
+
 add_custom_target(run_all_examples
     COMMAND ${CMAKE_COMMAND} -E echo "Running all examples..."
     COMMAND ${CMAKE_COMMAND} -E echo "Running A*_test..." && ./Astar_test/Astar_test
