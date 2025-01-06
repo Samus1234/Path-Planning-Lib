@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <Eigen/Dense>
+#include <cmath>
 #include <algorithm>
 #include <fstream>
 
@@ -27,9 +28,14 @@ using State = Eigen::Vector3d;
 using Control = Eigen::Vector2d;
 
 class Planner {
+    static State quantizeState(const State& x, const State& res) {
+        State rounded_state = Eigen::round(x.array() / res.array());
+        State x_q = res.array() * rounded_state.array();
+        return x_q;
+    }
 public:
-    Planner(double resolution, double delta_max, double L) :
-        resolution_(resolution), delta_max_(delta_max), L_(L) {
+    Planner(double delta_max, double L, const State& resolution) :
+        delta_max_(delta_max), L_(L), resolution_(resolution) {
     }
 
     ~Planner() = default;
@@ -46,6 +52,15 @@ public:
         return lattice_edges_;
     }
 
+    int getNodeIndex(const State& x_q) const {
+        auto it = std::find(lattice_nodes_.begin(), lattice_nodes_.end(), x_q);
+        if (it != lattice_nodes_.end()) {
+            return std::distance(lattice_nodes_.begin(), it);
+        }
+        return -1;
+    }
+
+
     void generateLattice(const State& x_init, int depth) {
         std::queue<std::tuple<State, int, int>> search_queue;
         std::unordered_set<State, MatrixHash<State>> visited_states;
@@ -56,9 +71,11 @@ public:
         lattice_nodes_.reserve(reserved_size);
         lattice_edges_.reserve(reserved_size);
 
-        lattice_nodes_.push_back(x_init);
-        search_queue.push({x_init, 0, 0});
-        visited_states.emplace(x_init);
+        auto x_init_quantized = quantizeState(x_init, resolution_);
+
+        lattice_nodes_.push_back(x_init_quantized);
+        search_queue.push({x_init_quantized, 0, 0});
+        visited_states.emplace(x_init_quantized);
 
         while (!search_queue.empty()) {
             auto [x_current, current_idx, current_depth] = search_queue.front();
@@ -69,12 +86,13 @@ public:
             size_t control_idx = 0;
             for (const auto& [u, cost] : motion_primitives_) {
                 auto x_next = dynamics(x_current, u, 1e-1);
-                auto [emplaced_it, was_emplaced] = visited_states.emplace(x_next);
+                auto x_next_quantized = quantizeState(x_next, resolution_);
+                auto [_, was_emplaced] = visited_states.emplace(x_next_quantized);
                 if (was_emplaced) {
-                    lattice_nodes_.push_back(x_next);
+                    lattice_nodes_.push_back(x_next_quantized);
                     int next_idx = lattice_nodes_.size() - 1;
                     lattice_edges_.push_back({current_idx, next_idx, control_idx, cost});
-                    search_queue.push({x_next, next_idx, current_depth+1});
+                    search_queue.push({x_next_quantized, next_idx, current_depth+1});
                 }
                 ++control_idx;
             }
@@ -84,8 +102,8 @@ public:
     void generateMotionPrimitives() {
         motion_primitives_.clear();
         
-        std::vector<double> velocities = {-1, -0.5, 0.5, 1};
-        std::vector<double> steering_angles = {-M_PI/6, -M_PI/12, 0, M_PI/12, M_PI/6};
+        std::vector<double> velocities = {2, 4, 8};
+        std::vector<double> steering_angles = {-M_PI/4, -M_PI/8, 0, M_PI/8, M_PI/4};
         int num_primitives = velocities.size()*steering_angles.size();
         motion_primitives_.reserve(num_primitives);
 
@@ -152,10 +170,10 @@ public:
     }
 
 private:
-    double resolution_;
     double delta_max_;
     double L_;
 
+    State resolution_;
     std::vector<State> lattice_nodes_;
     std::vector<std::pair<Control, double>> motion_primitives_;
     std::vector<std::tuple<int, int, int, double>> lattice_edges_;

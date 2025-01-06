@@ -2,8 +2,7 @@
 #include <memory>
 #include "dag.hpp"
 
-int main(int argc, char** argv) {
-
+void testDAG() {
     auto graph = std::make_shared<DAG<char, int>>();
     graph->addNode('A');
     graph->addNode('B');
@@ -34,6 +33,11 @@ int main(int argc, char** argv) {
         std::cout << index << ", " << cost << std::endl;
     }
     
+}
+
+int main(int argc, char** argv) {
+
+
 
     return 0;
 }

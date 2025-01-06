@@ -2,17 +2,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Load the CSV files
 nodes = pd.read_csv("data/lattice_nodes.csv")
 edges = pd.read_csv("data/lattice_edges.csv")
 primitives = pd.read_csv("data/motion_primitives.csv")
+path = pd.read_csv("data/optimal_path.csv")
 
-# Normalize costs for coloring
 min_cost = edges['cost'].min()
 max_cost = edges['cost'].max()
 edges['normalized_cost'] = (edges['cost'] - min_cost) / (max_cost - min_cost)
 
-# Create the plot
 plt.figure(figsize=(10, 10))
 plt.scatter(nodes['y'], nodes['x'], c='b', label='Lattice Nodes', alpha=0.8)
 
@@ -43,20 +41,31 @@ for _, edge in edges.iterrows():
         x_curve.append(x)
         y_curve.append(y)
 
-    # Use the colormap for the edge color based on cost
     plt.plot(y_curve, x_curve, color=plt.cm.viridis(cost_normalized), alpha=0.5)
 
-# Add a colorbar for edge costs
-sm = plt.cm.ScalarMappable(cmap='winter', norm=plt.Normalize(vmin=min_cost, vmax=max_cost))
+path_edges = path.to_numpy()
+for i in range(len(path_edges) - 1):
+    state_idx_1, primitive_idx = path_edges[i]
+    state_idx_2, _ = path_edges[i + 1]
+    x_start, y_start = nodes.iloc[state_idx_1][['x', 'y']]
+    x_end, y_end = nodes.iloc[state_idx_2][['x', 'y']]
+    plt.plot([y_start, y_end], [x_start, x_end], 'r-', lw=2, label='Optimal Path' if i == 0 else "")
+
+start_node = path_edges[0][0]
+goal_node = path_edges[-1][0]
+plt.scatter(nodes.iloc[start_node]['y'], nodes.iloc[start_node]['x'], c='green', label='Start Node', s=100)
+plt.scatter(nodes.iloc[goal_node]['y'], nodes.iloc[goal_node]['x'], c='purple', label='Goal Node', s=100)
+
+sm = plt.cm.ScalarMappable(cmap='viridis', norm=plt.Normalize(vmin=min_cost, vmax=max_cost))
 sm.set_array([])
 plt.colorbar(sm, label='Edge Cost')
 
-# Finalize the plot
 plt.xlabel('Y')
 plt.ylabel('X')
-plt.title('Lattice Visualization with Curved Paths and Edge Costs')
+plt.title('Lattice Visualization with Optimal Path and Edge Costs')
 plt.legend()
 plt.grid(True)
 
-# Save the plot
-plt.savefig("plots/lattice_with_costs.png")
+plt.savefig("plots/lattice_with_optimal_path.png")
+plt.show()
+

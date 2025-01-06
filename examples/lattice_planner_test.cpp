@@ -6,7 +6,11 @@ int main(int argc, char** argv) {
 
     std::cout << "Function to exercise lattice planner" << std::endl;
 
-    LatticePlanner::Planner planner(1e-2, M_PI/5, 1.0);
+    LatticePlanner::State resolution;
+
+    resolution << 1e-3, 1e-3, M_PI/180; // 1 mm and 1 degree
+
+    LatticePlanner::Planner planner(M_PI/3, 1.0, resolution);
 
     LatticePlanner::State x_init;
 
@@ -14,9 +18,9 @@ int main(int argc, char** argv) {
 
     planner.generateMotionPrimitives();
 
-    auto motion_primitives = planner.getMotionPrimitives();
+    planner.generateLattice(x_init, 3);
 
-    planner.generateLattice(x_init, 2);
+    auto motion_primitives = planner.getMotionPrimitives();
 
     auto lattice_nodes = planner.getLatticeNodes();
 
