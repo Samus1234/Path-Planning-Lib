@@ -22,5 +22,7 @@ int main(int argc, char** argv) {
 
     auto lattice_edges = planner.getLatticeEdges();
 
+    planner.saveLatticeToCSV("data/lattice_nodes.csv", "data/lattice_edges.csv", "data/motion_primitives.csv");
+
     return 0;
 }

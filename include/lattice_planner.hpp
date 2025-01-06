@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <algorithm>
+#include <fstream>
 
 template <typename T>
 struct MatrixHash {
@@ -41,7 +42,7 @@ public:
         return lattice_nodes_;
     }
 
-    const std::vector<std::tuple<int, int, double>>& getLatticeEdges () const {
+    const std::vector<std::tuple<int, int, int, double>>& getLatticeEdges () const {
         return lattice_edges_;
     }
 
@@ -65,15 +66,17 @@ public:
             if (current_depth >= depth) {
                 continue;
             }
+            size_t control_idx = 0;
             for (const auto& [u, cost] : motion_primitives_) {
                 auto x_next = dynamics(x_current, u, 1e-1);
                 auto [emplaced_it, was_emplaced] = visited_states.emplace(x_next);
                 if (was_emplaced) {
                     lattice_nodes_.push_back(x_next);
                     int next_idx = lattice_nodes_.size() - 1;
-                    lattice_edges_.push_back({current_idx, next_idx, cost});
+                    lattice_edges_.push_back({current_idx, next_idx, control_idx, cost});
                     search_queue.push({x_next, next_idx, current_depth+1});
                 }
+                ++control_idx;
             }
         }
     }
@@ -118,6 +121,36 @@ public:
         return x_next;
     }
 
+    void saveLatticeToCSV(
+        const std::string& node_file,
+        const std::string& edge_file,
+        const std::string& primitive_file) {
+        std::ofstream node_out(node_file);
+        node_out << "x,y,theta\n";
+        for (const auto& node : lattice_nodes_) {
+            node_out << node(0) << "," << node(1) << "," << node(2) << "\n";
+        }
+        node_out.close();
+
+        std::ofstream edge_out(edge_file);
+        edge_out << "parent,child,control,cost\n";
+        for (const auto& edge : lattice_edges_) {
+            int parent, child, control;
+            double cost;
+            std::tie(parent, child, control, cost) = edge;
+            edge_out << parent << "," << child << "," << control << "," << cost << "\n";
+        }
+        edge_out.close();
+
+        std::ofstream primitive_out(primitive_file);
+        primitive_out << "index,velocity,steering_angle,cost\n";
+        int index = 0;
+        for (const auto& [control, cost] : motion_primitives_) {
+            primitive_out << index++ << "," << control(0) << "," << control(1) << "," << cost << "\n";
+        }
+        primitive_out.close();
+    }
+
 private:
     double resolution_;
     double delta_max_;
@@ -125,9 +158,9 @@ private:
 
     std::vector<State> lattice_nodes_;
     std::vector<std::pair<Control, double>> motion_primitives_;
-    std::vector<std::tuple<int, int, double>> lattice_edges_;
+    std::vector<std::tuple<int, int, int, double>> lattice_edges_;
 };
 
-}
+} // namespace LatticePlanner
 
 #endif /* _LATTICE_PLANNER_H_ */
