@@ -51,7 +51,7 @@ public:
         std::unordered_set<State, MatrixHash<State>> visited_states;
 
         auto num_primitives = motion_primitives_.size();
-        auto reserved_size = num_primitives * depth;
+        auto reserved_size = std::pow<int>(num_primitives, depth);
         
         lattice_nodes_.reserve(reserved_size);
         lattice_edges_.reserve(reserved_size);
