@@ -16,11 +16,26 @@ public:
         nodes_.push_back(node);
     }
 
-    void addEdge(int parent, int child, CostType cost) {
+    void addEdge(NodeType parent_node, NodeType child_node, CostType cost) {
+        auto parent_it = std::find(nodes_.begin(), nodes_.end(), parent_node);
+        auto child_it = std::find(nodes_.begin(), nodes_.end(), child_node);
+        if (parent_it == nodes_.end()) {
+            std::cout << "Parent Node not found in graph" << std::endl;
+            return;
+        }
+        if (child_it == nodes_.end()) {
+            std::cout << "Child Node not found in graph" << std::endl;
+            return;
+        }
+
+        int parent = static_cast<int>(std::distance(nodes_.begin(), parent_it));
+        int child = static_cast<int>(std::distance(nodes_.begin(), child_it));
+        
         edges_.emplace_back(parent, child, cost);
+        neighbor_map_[parent].emplace_back(child, cost);
     }
 
-    void buildNeighborMap() {
+    void buildFullNeighborMap() {
         neighbor_map_.clear();
         for (const auto& [parent, child, cost] : edges_) {
             neighbor_map_[parent].emplace_back(child, cost);

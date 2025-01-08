@@ -11,33 +11,36 @@ void testDAG() {
     graph->addNode('E');
     graph->addNode('G');
 
-    graph->addEdge(0, 1, 1);
-    graph->addEdge(0, 4, 3);
-    graph->addEdge(0, 2, 5);
+    graph->addEdge('A', 'B', 1);
+    graph->addEdge('A', 'E', 3);
+    graph->addEdge('A', 'C', 5);
 
-    graph->addEdge(1, 3, 2);
-    graph->addEdge(1, 5, 8);
+    graph->addEdge('B', 'D', 2);
+    graph->addEdge('B', 'G', 8);
     
-    graph->addEdge(2, 1, 3);
-    graph->addEdge(2, 3, 3);
+    graph->addEdge('C', 'B', 3);
+    graph->addEdge('C', 'D', 3);
 
-    graph->addEdge(3, 5, 3);
+    graph->addEdge('D', 'G', 3);
 
-    graph->addEdge(4, 5, 5);
+    graph->addEdge('E', 'G', 5);
 
-    graph->buildNeighborMap();
+    auto nodes = graph->getNodes();
 
-    auto neighbors = graph->getNeighbors(0);
-
-    for (const auto& [index, cost] : neighbors) {
-        std::cout << index << ", " << cost << std::endl;
+    for (int i = 0; i < 5; i++) {
+        auto neighbors = graph->getNeighbors(i);
+        std::cout << "Neighbors of " << nodes[i] << std::endl;
+        for (const auto& [index, cost] : neighbors) {
+            std::cout << nodes[index] << ", with cost: " << cost << std::endl;
+        }
     }
+    
     
 }
 
 int main(int argc, char** argv) {
 
-
+    testDAG();
 
     return 0;
 }
