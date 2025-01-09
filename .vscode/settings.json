@@ -73,6 +73,7 @@
         "strstream": "cpp",
         "cfenv": "cpp",
         "valarray": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "kroneckerproduct": "cpp"
     }
 }

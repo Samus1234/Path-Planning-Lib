@@ -6,14 +6,20 @@
 #include <tuple>
 #include <algorithm>
 
+// Directed Acyclic Graph
 template <typename NodeType, typename CostType>
 class DAG {
 public:
     DAG() = default;
     ~DAG() = default;
 
+    bool empty() const {
+        return empty_;
+    }
+
     void addNode(const NodeType& node) {
         nodes_.push_back(node);
+        empty_ = false;
     }
 
     void addEdge(NodeType parent_node, NodeType child_node, CostType cost) {
@@ -31,6 +37,11 @@ public:
         int parent = static_cast<int>(std::distance(nodes_.begin(), parent_it));
         int child = static_cast<int>(std::distance(nodes_.begin(), child_it));
         
+        edges_.emplace_back(parent, child, cost);
+        neighbor_map_[parent].emplace_back(child, cost);
+    }
+
+    void addIndexedEdge(int parent, int child, CostType cost) {       
         edges_.emplace_back(parent, child, cost);
         neighbor_map_[parent].emplace_back(child, cost);
     }
@@ -59,6 +70,7 @@ public:
     }
 
 private:
+    bool empty_{true};
     std::vector<NodeType> nodes_;
     std::vector<std::tuple<int, int, CostType>> edges_;
     std::unordered_map<int, std::vector<std::tuple<int, CostType>>> neighbor_map_;
