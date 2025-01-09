@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
     planner.generateMotionPrimitives();
 
-    planner.generateLattice(x_init, 3);
+    planner.generateLattice(x_init, 2);
 
     auto motion_primitives = planner.getMotionPrimitives();
 

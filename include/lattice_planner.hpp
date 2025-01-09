@@ -102,7 +102,7 @@ public:
     void generateMotionPrimitives() {
         motion_primitives_.clear();
         
-        std::vector<double> velocities = {2, 4, 8};
+        std::vector<double> velocities = {1, 2, 3, 4};
         std::vector<double> steering_angles = {-M_PI/4, -M_PI/8, 0, M_PI/8, M_PI/4};
         int num_primitives = velocities.size()*steering_angles.size();
         motion_primitives_.reserve(num_primitives);

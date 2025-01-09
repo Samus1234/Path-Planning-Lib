@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
     planner.generateMotionPrimitives();
 
-    planner.generateLattice(x_init, 3);
+    planner.generateLattice(x_init, 2);
 
     auto motion_primitives = planner.getMotionPrimitives();
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
     start << 0,0,0;
 
-    goal << 2.237,-0.714,0.139626;
+    goal << 0.798,-0.033,-0.15708;
 
     auto optimal_path = lattice_astar.findPath(start, goal);
 
