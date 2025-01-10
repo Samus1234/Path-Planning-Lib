@@ -1,3 +1,6 @@
+#ifndef _RRT_H_
+#define _RRT_H_
+
 #include <iostream>
 #include <memory>
 #include <Eigen/Core>
@@ -143,3 +146,5 @@ private:
     double bounds_{10.0};
     double search_radius_{2.0};
 };
+
+#endif /* _RRT_H_ */

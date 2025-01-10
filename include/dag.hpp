@@ -17,6 +17,14 @@ public:
         return empty_;
     }
 
+    size_t numNodes() const {
+        return nodes_.size();
+    }
+
+    size_t numEdges() const {
+        return edges_.size();
+    }
+
     void addNode(const NodeType& node) {
         nodes_.push_back(node);
         empty_ = false;

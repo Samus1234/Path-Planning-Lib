@@ -111,7 +111,7 @@ public:
             for (const auto& steering_angle : steering_angles) {
                 if (std::abs(steering_angle) <= delta_max_) {
                     Control u(velocity, steering_angle);
-                    double cost = std::abs(velocity) + std::abs(steering_angle);
+                    double cost = u.norm();
                     motion_primitives_.push_back({u, cost});
                 }
             }
